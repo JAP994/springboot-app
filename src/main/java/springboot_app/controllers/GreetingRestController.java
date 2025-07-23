@@ -9,6 +9,6 @@ public class GreetingRestController {
 
     @GetMapping("/saludo/{name}")
     public String greeting(@PathVariable String name){
-        return "Hola como te va" + name;
+        return "Gitlab and Github sincronized" + name;
     }
 }
