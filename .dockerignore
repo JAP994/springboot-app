@@ -1,0 +1,21 @@
+# Ignorar carpetas y archivos innecesarios para la imagen Docker
+
+target/
+*.log
+*.tmp
+*.bak
+
+.git
+.gitignore
+
+.idea
+.vscode
+
+.DS_Store
+
+node_modules/
+
+*.iml
+
+# Archivos locales de configuración
+*.env

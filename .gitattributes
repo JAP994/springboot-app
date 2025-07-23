@@ -1,0 +1,35 @@
+# --- Archivos sin extensión (scripts de Maven Wrapper) ---
+mvnw text eol=lf
+mvnw.cmd text eol=crlf
+
+# --- Scripts ---
+*.sh text eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# --- Archivos Java ---
+*.java text eol=lf
+
+# --- Archivos de configuración ---
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+*.json text eol=lf
+*.env text eol=lf
+
+# --- Archivos de Docker ---
+Dockerfile text eol=lf
+*.dockerignore text eol=lf
+docker-compose*.yml text eol=lf
+
+# --- Archivos de documentación ---
+*.md text eol=lf
+*.txt text eol=lf
+
+# --- Archivos de logs ---
+*.log text eol=lf
+
+# --- Otros archivos comunes ---
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
