@@ -34,13 +34,20 @@ services:
     build: .
     container_name: springboot_dev
     volumes:
-      - ./:/app
+      - ./src:/app/src
+      - ./pom.xml:/app/pom.xml
+      - ~/.m2:/root/.m2
+      - /app/target
     working_dir: /app
     ports:
       - "8080:8080"
     command: mvn spring-boot:run
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASS=${POSTGRES_PASSWORD}
     restart: unless-stopped
     networks:
       - app-network
