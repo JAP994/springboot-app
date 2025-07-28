@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 
 @RestController
+@RequestMapping("/reports")
 public class ReportController {
 
     private List<Report> reports = new ArrayList<>(Arrays.asList(
@@ -27,12 +29,14 @@ public class ReportController {
         new Report(3, "DIRTIC202504", null, null, "DIRTIC", "SILLAS", "APP/TEST", "SILLAS OXIDADAS", "10.238.0.0", "JASANCHEZP", null)
     ));
 
-    @GetMapping("/reports")    
+    // @RequestMapping(method = RequestMethod.GET)
+    @GetMapping    
     public List<Report> getReport(){
         return reports;
     }
 
-    @GetMapping("/reports/{reportNumber}")    
+    // @RequestMapping(value = "/{reportNumber}", method = RequestMethod.GET)
+    @GetMapping("/{reportNumber}")    
     public Report getReport(@PathVariable String reportNumber){
         for(Report report : reports){
             if (report.getNumeroInforme().equalsIgnoreCase(reportNumber)) {
@@ -42,13 +46,15 @@ public class ReportController {
         return null;
     }
 
-    @PostMapping("/reports")
+    // @RequestMapping(method = RequestMethod.POST)
+    @PostMapping
     public Report postReport(@RequestBody Report report){
         reports.add(report);
         return report;
     }
 
-    @PutMapping("/reports")
+    // @RequestMapping(method = RequestMethod.PUT)
+    @PutMapping
     public Report putReport(@RequestBody Report report){
         System.out.println(report);
         for(Report r: reports){
@@ -65,7 +71,8 @@ public class ReportController {
         return null;
     }
 
-    @DeleteMapping("/reports/{reportNumber}")
+    // @RequestMapping(value = "/{reportNumber}", method = RequestMethod.DELETE)
+    @DeleteMapping("/{reportNumber}")
     public Report deleteReport(@PathVariable String reportNumber){
         for(Report report: reports){
             if (report.getNumeroInforme().equalsIgnoreCase(reportNumber)) {
@@ -78,7 +85,8 @@ public class ReportController {
         return null;
     }
 
-    @PatchMapping("/reports")
+    // @RequestMapping(method = RequestMethod.PATCH)
+    @PatchMapping
     public Report patchReport(@RequestBody Report report){
         
         for(Report r: reports){
@@ -102,5 +110,4 @@ public class ReportController {
         }
         return null;
     }
-
 }
