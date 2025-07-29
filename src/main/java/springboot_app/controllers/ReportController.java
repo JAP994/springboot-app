@@ -2,12 +2,15 @@ package springboot_app.controllers;
 
 import springboot_app.domain.Report;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -31,31 +34,36 @@ public class ReportController {
 
     // @RequestMapping(method = RequestMethod.GET)
     @GetMapping    
-    public List<Report> getReport(){
-        return reports;
+    public ResponseEntity<List<Report>> getReport(){
+        return ResponseEntity.ok(reports);
     }
 
     // @RequestMapping(value = "/{reportNumber}", method = RequestMethod.GET)
     @GetMapping("/{reportNumber}")    
-    public Report getReport(@PathVariable String reportNumber){
+    public ResponseEntity<?> getReport(@PathVariable String reportNumber){
         for(Report report : reports){
             if (report.getNumeroInforme().equalsIgnoreCase(reportNumber)) {
-                return report;
+                return ResponseEntity.ok(report);
             }
         }
-        return null;
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Informe no encontrado con numero de informe: " + reportNumber);
     }
 
     // @RequestMapping(method = RequestMethod.POST)
     @PostMapping
-    public Report postReport(@RequestBody Report report){
+    public ResponseEntity<?> postReport(@RequestBody Report report){
         reports.add(report);
-        return report;
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{reportNumber}").buildAndExpand(report.getNumeroInforme()).toUri();
+        
+        return ResponseEntity.created(location).body(report);
+                
     }
 
     // @RequestMapping(method = RequestMethod.PUT)
     @PutMapping
-    public Report putReport(@RequestBody Report report){
+    public ResponseEntity<?> putReport(@RequestBody Report report){
         System.out.println(report);
         for(Report r: reports){
             if (r.getNumeroInforme().equalsIgnoreCase(report.getNumeroInforme())) {
@@ -65,29 +73,29 @@ public class ReportController {
                 r.setArchivoEvidencia(report.getArchivoEvidencia());
                 r.setDescripcionDetallada(report.getDescripcionDetallada());
                 
-                return r;
+                return ResponseEntity.noContent().build();
             }
         }
-        return null;
+        return ResponseEntity.notFound().build();
     }
 
     // @RequestMapping(value = "/{reportNumber}", method = RequestMethod.DELETE)
     @DeleteMapping("/{reportNumber}")
-    public Report deleteReport(@PathVariable String reportNumber){
+    public ResponseEntity<?> deleteReport(@PathVariable String reportNumber){
         for(Report report: reports){
             if (report.getNumeroInforme().equalsIgnoreCase(reportNumber)) {
                 reports.remove(report);
                 
-                return report;
+                return ResponseEntity.noContent().build();
             }
 
         }
-        return null;
+        return ResponseEntity.notFound().build();
     }
 
     // @RequestMapping(method = RequestMethod.PATCH)
     @PatchMapping
-    public Report patchReport(@RequestBody Report report){
+    public ResponseEntity<?> patchReport(@RequestBody Report report){
         
         for(Report r: reports){
             if (r.getNumeroInforme().equalsIgnoreCase(report.getNumeroInforme())) {
@@ -105,9 +113,9 @@ public class ReportController {
                     r.setDescripcionDetallada(report.getDescripcionDetallada());
                 }
 
-                return r;
+                return ResponseEntity.ok("Cliente modificado exitosamente: " + report.getNumeroInforme());
             }
         }
-        return null;
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Informe no encontrado: " + report.getNumeroInforme());
     }
 }
