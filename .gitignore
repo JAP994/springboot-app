@@ -34,4 +34,5 @@ build/
 pgadmin/
 postgres_data/
 postgres/
+uploads/
 .env

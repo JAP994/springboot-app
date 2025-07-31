@@ -1,21 +1,18 @@
-# Ignorar carpetas y archivos innecesarios para la imagen Docker
-
+# ⛔ Archivos/carpeta que no se necesitan en la imagen
 target/
 *.log
 *.tmp
 *.bak
+*.env
 
+# IDE y configuración local
 .git
 .gitignore
-
 .idea
 .vscode
-
 .DS_Store
-
-node_modules/
-
 *.iml
 
-# Archivos locales de configuración
-*.env
+# ⛳ Permitimos estos para el build
+!src/
+!pom.xml

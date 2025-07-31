@@ -1,139 +1,101 @@
 package springboot_app.domain;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "reports")
 public class Report {
-    private int id;
 
-    private String numeroInforme;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    private LocalDateTime fechaHoraInforme;
+    @NotBlank
+    @Column(unique = true)
+    private String reportNumber;
 
-    private LocalDateTime fechaHoraDetectado;
+    @NotNull
+    private LocalDateTime reportDateTime;
 
-    private String repartoLugarDetectado;
+    @NotNull
+    private LocalDateTime detectedDateTime;
 
-    private String materialPersonalInvolucrado;
+    @NotBlank
+    @Size(max = 100)
+    private String detectedLocationUnit;
 
-    private String archivoEvidencia; // Se guardará la ruta del archivo
+    @NotBlank
+    @Size(max = 200)
+    private String involvedMaterialPersonnel;
 
-    private String descripcionDetallada;
+    @NotBlank
+    private String evidenceFile;
 
-    // Campos de auditoría
-    private String ipRegistro;
+    @NotBlank
+    @Size(max = 400)
+    private String detailedDescription;
 
+    // Auditoría creación
+    private String registrationIp;
     private String userAgent;
+    private LocalDateTime creationDate;
 
-    private LocalDateTime fechaCreacion;
+    // Auditoría modificación
+    private String lastModifiedIp;
+    private String lastModifiedUserAgent;
+    private LocalDateTime lastModifiedDate;
 
-    // Metodos
+    @PrePersist
     protected void onCreate() {
-        this.fechaCreacion = LocalDateTime.now();
+        this.creationDate = LocalDateTime.now();
+        this.reportDateTime = LocalDateTime.now();
     }
 
-    // Getter and Setter
-    public int getId() {
-        return id;
-    }
+    // Getters y setters...
 
-    public void setId(int id) {
-        this.id = id;
-    }
+    public Integer getId() { return id; }
+    public void setId(Integer id) { this.id = id; }
 
-    public String getNumeroInforme() {
-        return numeroInforme;
-    }
+    public String getReportNumber() { return reportNumber; }
+    public void setReportNumber(String reportNumber) { this.reportNumber = reportNumber; }
 
-    public void setNumeroInforme(String numeroInforme) {
-        this.numeroInforme = numeroInforme;
-    }
+    public LocalDateTime getReportDateTime() { return reportDateTime; }
+    public void setReportDateTime(LocalDateTime reportDateTime) { this.reportDateTime = reportDateTime; }
 
-    public LocalDateTime getFechaHoraInforme() {
-        return fechaHoraInforme;
-    }
+    public LocalDateTime getDetectedDateTime() { return detectedDateTime; }
+    public void setDetectedDateTime(LocalDateTime detectedDateTime) { this.detectedDateTime = detectedDateTime; }
 
-    public void setFechaHoraInforme(LocalDateTime fechaHoraInforme) {
-        this.fechaHoraInforme = fechaHoraInforme;
-    }
+    public String getDetectedLocationUnit() { return detectedLocationUnit; }
+    public void setDetectedLocationUnit(String detectedLocationUnit) { this.detectedLocationUnit = detectedLocationUnit; }
 
-    public LocalDateTime getFechaHoraDetectado() {
-        return fechaHoraDetectado;
-    }
+    public String getInvolvedMaterialPersonnel() { return involvedMaterialPersonnel; }
+    public void setInvolvedMaterialPersonnel(String involvedMaterialPersonnel) { this.involvedMaterialPersonnel = involvedMaterialPersonnel; }
 
-    public void setFechaHoraDetectado(LocalDateTime fechaHoraDetectado) {
-        this.fechaHoraDetectado = fechaHoraDetectado;
-    }
+    public String getEvidenceFile() { return evidenceFile; }
+    public void setEvidenceFile(String evidenceFile) { this.evidenceFile = evidenceFile; }
 
-    public String getRepartoLugarDetectado() {
-        return repartoLugarDetectado;
-    }
+    public String getDetailedDescription() { return detailedDescription; }
+    public void setDetailedDescription(String detailedDescription) { this.detailedDescription = detailedDescription; }
 
-    public void setRepartoLugarDetectado(String repartoLugarDetectado) {
-        this.repartoLugarDetectado = repartoLugarDetectado;
-    }
+    public String getRegistrationIp() { return registrationIp; }
+    public void setRegistrationIp(String registrationIp) { this.registrationIp = registrationIp; }
 
-    public String getMaterialPersonalInvolucrado() {
-        return materialPersonalInvolucrado;
-    }
+    public String getUserAgent() { return userAgent; }
+    public void setUserAgent(String userAgent) { this.userAgent = userAgent; }
 
-    public void setMaterialPersonalInvolucrado(String materialPersonalInvolucrado) {
-        this.materialPersonalInvolucrado = materialPersonalInvolucrado;
-    }
+    public LocalDateTime getCreationDate() { return creationDate; }
+    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
 
-    public String getArchivoEvidencia() {
-        return archivoEvidencia;
-    }
+    public String getLastModifiedIp() { return lastModifiedIp; }
+    public void setLastModifiedIp(String lastModifiedIp) { this.lastModifiedIp = lastModifiedIp; }
 
-    public void setArchivoEvidencia(String archivoEvidencia) {
-        this.archivoEvidencia = archivoEvidencia;
-    }
+    public String getLastModifiedUserAgent() { return lastModifiedUserAgent; }
+    public void setLastModifiedUserAgent(String lastModifiedUserAgent) { this.lastModifiedUserAgent = lastModifiedUserAgent; }
 
-    public String getDescripcionDetallada() {
-        return descripcionDetallada;
-    }
+    public LocalDateTime getLastModifiedDate() { return lastModifiedDate; }
+    public void setLastModifiedDate(LocalDateTime lastModifiedDate) { this.lastModifiedDate = lastModifiedDate; }
 
-    public void setDescripcionDetallada(String descripcionDetallada) {
-        this.descripcionDetallada = descripcionDetallada;
-    }
-
-    public String getIpRegistro() {
-        return ipRegistro;
-    }
-
-    public void setIpRegistro(String ipRegistro) {
-        this.ipRegistro = ipRegistro;
-    }
-
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public void setUserAgent(String userAgent) {
-        this.userAgent = userAgent;
-    }
-
-    public LocalDateTime getFechaCreacion() {
-        return fechaCreacion;
-    }
-
-    public void setFechaCreacion(LocalDateTime fechaCreacion) {
-        this.fechaCreacion = fechaCreacion;
-    }
-    
-    // Constructor
-    public Report(int id, String numeroInforme, LocalDateTime fechaHoraInforme, LocalDateTime fechaHoraDetectado,
-            String repartoLugarDetectado, String materialPersonalInvolucrado, String archivoEvidencia,
-            String descripcionDetallada, String ipRegistro, String userAgent, LocalDateTime fechaCreacion) {
-        this.id = id;
-        this.numeroInforme = numeroInforme;
-        this.fechaHoraInforme = fechaHoraInforme;
-        this.fechaHoraDetectado = fechaHoraDetectado;
-        this.repartoLugarDetectado = repartoLugarDetectado;
-        this.materialPersonalInvolucrado = materialPersonalInvolucrado;
-        this.archivoEvidencia = archivoEvidencia;
-        this.descripcionDetallada = descripcionDetallada;
-        this.ipRegistro = ipRegistro;
-        this.userAgent = userAgent;
-        this.fechaCreacion = fechaCreacion;
-    }
+    public Report() {}
 }

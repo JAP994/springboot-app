@@ -13,8 +13,5 @@ COPY pom.xml .
 # Descargamos dependencias (cache)
 RUN mvn dependency:go-offline
 
-# Copiamos todo el código fuente
-COPY src ./src
-
 # Por defecto ejecutamos spring-boot:run (lo puedes sobrescribir en docker-compose)
 CMD ["mvn", "spring-boot:run"]
