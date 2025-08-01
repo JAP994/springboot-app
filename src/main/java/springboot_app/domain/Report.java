@@ -3,7 +3,9 @@ package springboot_app.domain;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDateTime;
+import io.swagger.v3.oas.annotations.Hidden;
 
+@Hidden
 @Entity
 @Table(name = "reports")
 public class Report {
