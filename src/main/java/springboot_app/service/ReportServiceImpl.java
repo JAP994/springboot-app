@@ -1,17 +1,16 @@
 package springboot_app.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
 import springboot_app.domain.Report;
 import springboot_app.dto.ReportUpdateFieldDTO;
 import springboot_app.repository.ReportRepository;
 
-import jakarta.persistence.EntityNotFoundException;
-
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class ReportServiceImpl implements ReportService {
@@ -20,11 +19,59 @@ public class ReportServiceImpl implements ReportService {
     private ReportRepository reportRepository;
 
     @Override
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Report saveReport(Report report, String ip, String userAgent) {
+        int year = report.getDetectedDateTime().getYear();
+        int count = reportRepository.countByDetectedLocationUnitAndYear(report.getDetectedLocationUnit(), year);
+        String sequential = String.format("%04d", count + 1);
+        String reportNumber = "REP-" + report.getDetectedLocationUnit() + "-" + year + "-" + sequential;
+
+        report.setReportNumber(reportNumber);
         report.setRegistrationIp(ip);
         report.setUserAgent(userAgent);
         report.setCreationDate(LocalDateTime.now());
+
         return reportRepository.save(report);
+    }
+
+    @Override
+    @Transactional
+    public Report updateReport(String reportNumber, Report report, String ip, String userAgent) {
+        Report existing = getByReportNumber(reportNumber);
+        if (existing == null) throw new EntityNotFoundException("Report not found");
+
+        existing.setDetectedDateTime(report.getDetectedDateTime());
+        existing.setDetectedLocationUnit(report.getDetectedLocationUnit());
+        existing.setInvolvedMaterialPersonnel(report.getInvolvedMaterialPersonnel());
+        existing.setDetailedDescription(report.getDetailedDescription());
+        existing.setEvidenceFile(report.getEvidenceFile());
+
+        existing.setLastModifiedIp(ip);
+        existing.setLastModifiedUserAgent(userAgent);
+        existing.setLastModifiedDate(LocalDateTime.now());
+
+        return reportRepository.save(existing);
+    }
+
+    @Override
+    public Report updatePartial(String reportNumber, ReportUpdateFieldDTO dto, String ip, String userAgent) {
+        Report existing = getByReportNumber(reportNumber);
+        if (existing == null) throw new EntityNotFoundException("Report not found");
+
+        if (dto.getDetectedLocationUnit() != null) existing.setDetectedLocationUnit(dto.getDetectedLocationUnit());
+        if (dto.getDetailedDescription() != null) existing.setDetailedDescription(dto.getDetailedDescription());
+        // Agrega más campos si es necesario
+
+        existing.setLastModifiedIp(ip);
+        existing.setLastModifiedUserAgent(userAgent);
+        existing.setLastModifiedDate(LocalDateTime.now());
+
+        return reportRepository.save(existing);
+    }
+
+    @Override
+    public Report getByReportNumber(String reportNumber) {
+        return reportRepository.findByReportNumber(reportNumber).orElse(null);
     }
 
     @Override
@@ -33,56 +80,8 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
-    public Report getByReportNumber(String reportNumber) {
-        Optional<Report> optional = reportRepository.findByReportNumber(reportNumber);
-        if (optional.isEmpty()) {
-            throw new EntityNotFoundException("Reporte no encontrado con número: " + reportNumber);
-        }
-        return optional.get();
+    @Transactional
+    public void deleteReportByNumber(String reportNumber) {
+        reportRepository.deleteByReportNumber(reportNumber);
     }
-
-@Override
-public Report updateReport(String reportNumber, Report updatedReport, String ip, String userAgent) {
-    Report existingReport = getByReportNumber(reportNumber);
-
-    existingReport.setDetectedDateTime(updatedReport.getDetectedDateTime());
-    existingReport.setDetectedLocationUnit(updatedReport.getDetectedLocationUnit());
-    existingReport.setInvolvedMaterialPersonnel(updatedReport.getInvolvedMaterialPersonnel());
-    existingReport.setDetailedDescription(updatedReport.getDetailedDescription());
-    existingReport.setEvidenceFile(updatedReport.getEvidenceFile());
-
-    existingReport.setLastModifiedIp(ip);
-    existingReport.setLastModifiedUserAgent(userAgent);
-    existingReport.setLastModifiedDate(LocalDateTime.now());
-
-    return reportRepository.save(existingReport);
-}
-
-    @Override
-    public Report updatePartial(String reportNumber, ReportUpdateFieldDTO dto) {
-        Report existingReport = getByReportNumber(reportNumber);
-
-        // Ejemplo, actualizar solo los campos no nulos del DTO
-        if (dto.getDetectedDateTime() != null) {
-            existingReport.setDetectedDateTime(dto.getDetectedDateTime());
-        }
-        if (dto.getDetectedLocationUnit() != null) {
-            existingReport.setDetectedLocationUnit(dto.getDetectedLocationUnit());
-        }
-        if (dto.getInvolvedMaterialPersonnel() != null) {
-            existingReport.setInvolvedMaterialPersonnel(dto.getInvolvedMaterialPersonnel());
-        }
-        if (dto.getDetailedDescription() != null) {
-            existingReport.setDetailedDescription(dto.getDetailedDescription());
-        }
-        // Puedes agregar más campos según dto
-
-        return reportRepository.save(existingReport);
-    }
-
-    @Override
-    public void deleteReport(String reportNumber) {
-        Report existingReport = getByReportNumber(reportNumber);
-        reportRepository.delete(existingReport);
-    }
-}
+} 

@@ -12,7 +12,6 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @NotBlank
     @Column(unique = true)
     private String reportNumber;
 

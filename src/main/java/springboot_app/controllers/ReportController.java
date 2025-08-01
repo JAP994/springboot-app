@@ -1,5 +1,6 @@
 package springboot_app.controllers;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
@@ -36,7 +37,6 @@ public class ReportController {
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     public ResponseEntity<?> createWithFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("reportNumber") String reportNumber,
             @RequestParam("detectedDateTime") String detectedDateTime,
             @RequestParam("detectedLocationUnit") String detectedLocationUnit,
             @RequestParam("involvedMaterialPersonnel") String involvedMaterialPersonnel,
@@ -44,28 +44,23 @@ public class ReportController {
             HttpServletRequest request
     ) throws IOException {
 
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body("Archivo obligatorio");
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body("Debe proporcionar un archivo válido.");
         }
 
         String originalFilename = file.getOriginalFilename();
-
         if (originalFilename == null || originalFilename.isBlank()) {
-            return ResponseEntity.badRequest().body("El archivo debe tener un nombre válido");
+            return ResponseEntity.badRequest().body("El archivo debe tener un nombre válido.");
         }
 
         String filenameLower = originalFilename.toLowerCase();
-
-        if (!filenameLower.endsWith(".pdf") && !filenameLower.endsWith(".jpg")) {
-            return ResponseEntity.badRequest().body("Solo se permiten archivos PDF o JPG");
+        if (!filenameLower.endsWith(".pdf") && !filenameLower.endsWith(".jpg") && !filenameLower.endsWith(".jpeg")) {
+            return ResponseEntity.badRequest().body("Solo se permiten archivos PDF o JPG.");
         }
 
+        // Validación de fecha y hora
         LocalDateTime detectedDateTimeParsed = null;
-        String[] patterns = {
-            "yyyy-MM-dd'T'HH:mm",
-            "yyyy-MM-dd'T'HH:mm:ss"
-        };
-
+        String[] patterns = {"dd/MM/yyyy HH:mm", "dd/MM/yyyy"};
         for (String pattern : patterns) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
@@ -75,13 +70,17 @@ public class ReportController {
         }
 
         if (detectedDateTimeParsed == null) {
-            return ResponseEntity.badRequest().body("Formato de fecha y hora inválido. Use formato ISO 8601.");
+            return ResponseEntity.badRequest().body("Formato de fecha inválido. Use dd/MM/yyyy HH:mm.");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        String datePath = now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        if (detectedDateTimeParsed.isAfter(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("La fecha y hora detectada no puede ser mayor que la fecha y hora actual.");
+        }
 
-        String baseUploadDir =  System.getProperty("user.dir") + File.separator + "uploads" + File.separator + datePath;
+        // Construcción de ruta de archivo
+        String datePath = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String baseUploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + datePath;
+
         File uploadDir = new File(baseUploadDir);
         if (!uploadDir.exists()) {
             uploadDir.mkdirs();
@@ -90,33 +89,37 @@ public class ReportController {
         String newFilename = UUID.randomUUID() + "_" + originalFilename;
         File destinationFile = new File(uploadDir, newFilename);
         file.transferTo(destinationFile);
-
-        // Ruta relativa para guardar en la base de datos o devolver al cliente
         String relativePath = "uploads/" + datePath + "/" + newFilename;
 
+        // Captura de IP y user-agent
+        String ip = request.getRemoteAddr();
+        String userAgent = request.getHeader("User-Agent");
 
         Report report = new Report();
-        report.setReportNumber(reportNumber);
         report.setDetectedDateTime(detectedDateTimeParsed);
         report.setDetectedLocationUnit(detectedLocationUnit);
         report.setInvolvedMaterialPersonnel(involvedMaterialPersonnel);
         report.setDetailedDescription(detailedDescription);
         report.setEvidenceFile(relativePath);
 
-        String ip = request.getRemoteAddr();
-        String userAgent = request.getHeader("User-Agent");
+        Report created = service.saveReport(report, ip, userAgent);
 
-        return ResponseEntity.ok(service.saveReport(report, ip, userAgent));
+        return ResponseEntity.ok(created);
     }
 
+    
     @GetMapping
     public List<Report> getAll() {
         return service.getAllReports();
     }
 
     @GetMapping("/{reportNumber}")
-    public Report getOne(@PathVariable String reportNumber) {
-        return service.getByReportNumber(reportNumber);
+    public ResponseEntity<?> getOne(@PathVariable String reportNumber) {
+        Report report = service.getByReportNumber(reportNumber);
+        if (report == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(report);
     }
 
     @PutMapping(value = "/{reportNumber}/upload", consumes = "multipart/form-data")
@@ -130,13 +133,8 @@ public class ReportController {
             HttpServletRequest request
     ) throws IOException {
 
-        // Valida y parsea fecha
         LocalDateTime detectedDateTimeParsed = null;
-        String[] patterns = {
-            "yyyy-MM-dd'T'HH:mm",
-            "yyyy-MM-dd'T'HH:mm:ss"
-        };
-
+        String[] patterns = {"dd/MM/yyyy HH:mm", "dd/MM/yyyy"};
         for (String pattern : patterns) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
@@ -146,7 +144,11 @@ public class ReportController {
         }
 
         if (detectedDateTimeParsed == null) {
-            return ResponseEntity.badRequest().body("Formato de fecha y hora inválido. Use formato ISO 8601.");
+            return ResponseEntity.badRequest().body("Formato de fecha y hora inválido. Use dd/MM/yyyy HH:mm");
+        }
+
+        if (detectedDateTimeParsed.isAfter(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("La fecha y hora detectada no puede ser mayor que la fecha y hora actual.");
         }
 
         Report report = service.getByReportNumber(reportNumber);
@@ -159,21 +161,20 @@ public class ReportController {
         report.setInvolvedMaterialPersonnel(involvedMaterialPersonnel);
         report.setDetailedDescription(detailedDescription);
 
-        // Si se envió archivo, guardarlo y actualizar ruta
         if (file != null && !file.isEmpty()) {
             String originalFilename = file.getOriginalFilename();
             if (originalFilename == null || originalFilename.isBlank()) {
                 return ResponseEntity.badRequest().body("El archivo debe tener un nombre válido");
             }
             String filenameLower = originalFilename.toLowerCase();
-            if (!filenameLower.endsWith(".pdf") && !filenameLower.endsWith(".jpg")) {
+            if (!filenameLower.endsWith(".pdf") && !filenameLower.endsWith(".jpg") && !filenameLower.endsWith(".jpeg")) {
                 return ResponseEntity.badRequest().body("Solo se permiten archivos PDF o JPG");
             }
 
             LocalDateTime now = LocalDateTime.now();
             String datePath = now.format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
 
-            String baseUploadDir =  System.getProperty("user.dir") + File.separator + "uploads" + File.separator + datePath;
+            String baseUploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + datePath;
             File uploadDir = new File(baseUploadDir);
             if (!uploadDir.exists()) {
                 uploadDir.mkdirs();
@@ -195,15 +196,27 @@ public class ReportController {
         return ResponseEntity.ok(updatedReport);
     }
 
-
     @PatchMapping("/{reportNumber}")
-    public Report patch(@PathVariable String reportNumber, @RequestBody ReportUpdateFieldDTO dto) {
-        return service.updatePartial(reportNumber, dto);
+    public ResponseEntity<?> patchReport(
+            @PathVariable String reportNumber,
+            @RequestBody ReportUpdateFieldDTO dto,
+            HttpServletRequest request
+    ) {
+        try {
+            String ip = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+
+            Report updatedReport = service.updatePartial(reportNumber, dto, ip, userAgent);
+
+            return ResponseEntity.ok(updatedReport);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{reportNumber}")
     public ResponseEntity<?> delete(@PathVariable String reportNumber) {
-        service.deleteReport(reportNumber);
+        service.deleteReportByNumber(reportNumber);
         return ResponseEntity.noContent().build();
     }
 

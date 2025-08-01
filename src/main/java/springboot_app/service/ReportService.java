@@ -7,9 +7,9 @@ import java.util.List;
 
 public interface ReportService {
     Report saveReport(Report report, String ip, String userAgent);
-    List<Report> getAllReports();
+    Report updateReport(String reportNumber, Report report, String ip, String userAgent);
+    Report updatePartial(String reportNumber, ReportUpdateFieldDTO dto, String ip, String userAgent);
     Report getByReportNumber(String reportNumber);
-    Report updateReport(String reportNumber, Report updatedReport, String ip, String userAgent);
-    Report updatePartial(String reportNumber, ReportUpdateFieldDTO dto);
-    void deleteReport(String reportNumber);
+    List<Report> getAllReports();
+    void deleteReportByNumber(String reportNumber);
 }
