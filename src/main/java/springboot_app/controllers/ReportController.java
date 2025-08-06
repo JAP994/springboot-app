@@ -38,7 +38,7 @@ public class ReportController {
     @Autowired
     private ReportService service;
 
-    @Operation(summary = "Crear reporte con archivo", description = "Crea un nuevo reporte incluyendo un archivo PDF o imagen")
+    @Operation(summary = "Crear reporte", description = "Crea un nuevo reporte incluyendo un archivo PDF o imagen")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Reporte creado correctamente",
             content = @Content(mediaType = "application/json",
@@ -148,7 +148,7 @@ public class ReportController {
         return ResponseEntity.ok(report);
     }
 
-    @Operation(summary = "Actualizar un reporte con nuevo archivo")
+    @Operation(summary = "Actualizar un reporte")
     @PutMapping(value = "/{reportNumber}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateWithFile(
             @PathVariable String reportNumber,
