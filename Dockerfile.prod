@@ -1,17 +1,22 @@
-# Dockerfile.prod
-FROM eclipse-temurin:21-jdk AS builder
+# Etapa de construcción con Maven
+FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
 WORKDIR /app
 
-COPY . .
+# Copiamos pom.xml y descargamos dependencias primero (mejor cache)
+COPY pom.xml .
+RUN mvn dependency:go-offline
 
+# Ahora copiamos el resto del código y compilamos
+COPY . .
 RUN mvn clean package -DskipTests
 
-# Imagen final
+# Imagen final (más liviana, solo con JDK)
 FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
+# Copiamos solo el JAR desde el builder
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
