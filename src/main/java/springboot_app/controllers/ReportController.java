@@ -6,6 +6,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,21 +54,17 @@ public class ReportController {
     public ResponseEntity<?> createWithFile(
             @Parameter(description = "Archivo adjunto (PDF, JPG, JPEG)", required = true)
             @RequestParam("file") MultipartFile file,
-
             @Parameter(description = "Fecha y hora detectada (dd/MM/yyyy HH:mm)", required = true)
             @RequestParam("detectedDateTime") String detectedDateTime,
-
             @Parameter(description = "Unidad donde se detectó la situación", required = true)
             @RequestParam("detectedLocationUnit") String detectedLocationUnit,
-
             @Parameter(description = "Materiales o personal involucrado", required = true)
             @RequestParam("involvedMaterialPersonnel") String involvedMaterialPersonnel,
-
             @Parameter(description = "Descripción detallada de la situación", required = true)
             @RequestParam("detailedDescription") String detailedDescription,
-
             HttpServletRequest request
     ) throws IOException {
+
         if (file == null || file.isEmpty()) {
             return ResponseEntity.badRequest().body("Debe proporcionar un archivo válido.");
         }
@@ -101,9 +101,7 @@ public class ReportController {
         String baseUploadDir = System.getProperty("user.dir") + File.separator + "uploads" + File.separator + datePath;
 
         File uploadDir = new File(baseUploadDir);
-        if (!uploadDir.exists()) {
-            uploadDir.mkdirs();
-        }
+        if (!uploadDir.exists()) uploadDir.mkdirs();
 
         String newFilename = UUID.randomUUID() + "_" + originalFilename;
         File destinationFile = new File(uploadDir, newFilename);
@@ -121,15 +119,21 @@ public class ReportController {
         report.setEvidenceFile(relativePath);
 
         Report created = service.saveReport(report, ip, userAgent);
-
         return ResponseEntity.ok(created);
     }
 
-    @Operation(summary = "Listar todos los reportes")
-    @ApiResponse(responseCode = "200", description = "Lista de reportes")
+    @Operation(summary = "Listar reportes paginados")
+    @ApiResponse(responseCode = "200", description = "Lista de reportes paginados")
     @GetMapping
-    public List<Report> getAll() {
-        return service.getAllReports();
+    public Page<Report> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "reportDateTime") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir
+    ) {
+        Sort sort = sortDir.equalsIgnoreCase("asc") ? Sort.by(sortBy).ascending() : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return service.getReports(pageable);
     }
 
     @Operation(summary = "Obtener un reporte por su número")
@@ -215,11 +219,9 @@ public class ReportController {
         String userAgent = request.getHeader("User-Agent");
 
         Report updatedReport = service.updateReport(reportNumber, report, ip, userAgent);
-
         return ResponseEntity.ok(updatedReport);
     }
 
-    // @Operation(summary = "Actualizar parcialmente un reporte")
     @Hidden
     @PatchMapping("/{reportNumber}")
     public ResponseEntity<?> patchReport(
@@ -246,11 +248,6 @@ public class ReportController {
         return ResponseEntity.noContent().build();
     }
 
-    // @Operation(summary = "Descargar archivo adjunto del reporte")
-    // @ApiResponses({
-    //     @ApiResponse(responseCode = "200", description = "Archivo descargado correctamente"),
-    //     @ApiResponse(responseCode = "404", description = "Archivo no encontrado")
-    // })
     @Hidden
     @GetMapping("/file/{year}/{month}/{day}/{filename}")
     public ResponseEntity<Resource> downloadFile(
@@ -263,9 +260,7 @@ public class ReportController {
             Path file = Paths.get("uploads", year, month, day, filename);
             Resource resource = new UrlResource(file.toUri());
 
-            if (!resource.exists()) {
-                return ResponseEntity.notFound().build();
-            }
+            if (!resource.exists()) return ResponseEntity.notFound().build();
 
             String contentType = Files.probeContentType(file);
             return ResponseEntity.ok()

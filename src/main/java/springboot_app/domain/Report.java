@@ -54,8 +54,6 @@ public class Report {
         this.reportDateTime = LocalDateTime.now();
     }
 
-    // Getters y setters...
-
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 

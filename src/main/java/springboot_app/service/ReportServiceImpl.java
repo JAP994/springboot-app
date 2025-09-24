@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import springboot_app.domain.Report;
 import springboot_app.dto.ReportUpdateFieldDTO;
 import springboot_app.repository.ReportRepository;
@@ -58,9 +60,10 @@ public class ReportServiceImpl implements ReportService {
         Report existing = getByReportNumber(reportNumber);
         if (existing == null) throw new EntityNotFoundException("Report not found");
 
+        if (dto.getDetectedDateTime() != null) existing.setDetectedDateTime(dto.getDetectedDateTime());
         if (dto.getDetectedLocationUnit() != null) existing.setDetectedLocationUnit(dto.getDetectedLocationUnit());
+        if (dto.getInvolvedMaterialPersonnel() != null) existing.setInvolvedMaterialPersonnel(dto.getInvolvedMaterialPersonnel());
         if (dto.getDetailedDescription() != null) existing.setDetailedDescription(dto.getDetailedDescription());
-        // Agrega más campos si es necesario
 
         existing.setLastModifiedIp(ip);
         existing.setLastModifiedUserAgent(userAgent);
@@ -84,4 +87,9 @@ public class ReportServiceImpl implements ReportService {
     public void deleteReportByNumber(String reportNumber) {
         reportRepository.deleteByReportNumber(reportNumber);
     }
-} 
+
+    @Override
+    public Page<Report> getReports(Pageable pageable) {
+        return reportRepository.findAll(pageable);
+    }
+}
