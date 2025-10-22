@@ -44,7 +44,7 @@ EN CASO DE DESCARGAR PROYECTO POR GITLAB SE DEBE SOLICITAR ACCESOS
     4. verificamos en la rama que nos encontramos sea la develop git branch 
     5. Bajamos el servidor docker compose down
     6. Volvemos a levantar todos los servicios docker compose up -d
-# PORBAMOS LA EJECUCION DEL API REST FULL CON EL SIGUIENTE LINK EN LOCAL
+# PROBAMOS LA EJECUCION DEL API REST FULL CON EL SIGUIENTE LINK EN LOCAL
 http://localhost:8080/sistem/api/v1/swagger-ui/index.html
 
 --------------------------------------------------------------------------------------------------
